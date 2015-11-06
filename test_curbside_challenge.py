@@ -2,37 +2,28 @@ import pytest
 import mock
 import curb_challenge as cc
 
-class TestDictKeysToLower:
-  def test_empty(self):
-    assert cc.dict_keys_to_lower({}) == {}
+#helpers
+@pytest.mark.parametrize("input,expected", [
+  ({}, {}),
+  ({'abc': 123}, {'abc': 123}),
+  ({'ABC': 123}, {'abc': 123}),
+  (
+    {'CaT':'mEoW', 'dOG': 'WOOf', 555: 555, '12!@$A%#*@(7': 555},
+    {'cat':'mEoW', 'dog': 'WOOf', '555': 555, '12!@$a%#*@(7': 555}
+  ),
+])
+def test_dict_keys_to_lower(input, expected):
+  assert cc.dict_keys_to_lower(input) == expected
 
-  def test_single_value(self):
-    same = {'abc': 123}
-    assert cc.dict_keys_to_lower(same) == same
-
-  def test_single_uppercase_value(self):
-    assert cc.dict_keys_to_lower({'ABC': 123}) == {'abc': 123}
-
-  def test_lots(self):
-    given = {'CaT':'mEoW', 'dOG': 'WOOf', 555: 324, '12!@$A%#*@(7': 555}
-    expected = {'cat':'mEoW', 'dog': 'WOOf', '555': 324, '12!@$a%#*@(7': 555}
-    assert cc.dict_keys_to_lower(given) == expected
-
-class TestListify:
-  def test_none(self):
-    assert cc.listify(None) == [None]
-
-  def test_empty(self):
-    assert cc.listify([]) == []
-
-  def test_single_str(self):
-    assert cc.listify('x') == ['x']
-
-  def test_single_num(self):
-    assert cc.listify(1) == [1]
-
-  def test_dict(self):
-    assert cc.listify({}) == [{}]
+@pytest.mark.parametrize("input,expected", [
+  (None, [None]),
+  ([], []),
+  ('x', ['x']),
+  (1, [1]),
+  ({}, [{}]),
+])
+def test_listify(input, expected):
+  assert cc.listify(input) == expected
 
 class TestCurbApi:
   def setup(self):
@@ -62,36 +53,36 @@ class TestSessionGenerator:
     self.sessions = cc.session_generator()
 
   def test_get_session(self):
-    self.sessions.next()
+    next(self.sessions)
     cc.curb_api.assert_called_once_with('get-session')
 
   def test_first_session(self):
-    assert self.sessions.next() == 'session1-10'
+    assert next(self.sessions) == 'session1-10'
 
   def test_persist_session(self):
-    for i in xrange(10):
-      assert self.sessions.next() == 'session1-10'
+    for i in range(10):
+      assert next(self.sessions) == 'session1-10'
 
-  def test_obtain_new_session(self):
-    for i in xrange(10):
-      self.sessions.next()
-    assert self.sessions.next() == 'session11-20'
+  def test_get_new_session(self):
+    for i in range(10):
+      next(self.sessions)
+    assert next(self.sessions) == 'session11-20'
 
-  def test_many_sessions(self):
-    for i in xrange(10):
-      assert self.sessions.next() == 'session1-10'
-    for i in xrange(10):
-      assert self.sessions.next() == 'session11-20'
-    for i in xrange(10):
-      assert self.sessions.next() == 'session21-30'
+  def test_get_many_sessions(self):
+    for i in range(10):
+      assert next(self.sessions) == 'session1-10'
+    for i in range(10):
+      assert next(self.sessions) == 'session11-20'
+    for i in range(10):
+      assert next(self.sessions) == 'session21-30'
 
 class TestGetResponse:
   def setup(self):
-    self.example_response = '{"Any": "response"}'
-    self.example_result = {'any': 'response'}
+    self.example_response = '{"Any": "Response"}'
+    self.example_result = {'any': 'Response'}
     cc.curb_api = mock.Mock(return_value = self.example_response)
     cc.sessions = mock.Mock()
-    cc.sessions.next = mock.Mock(return_value = "session_id")
+    cc.sessions.__next__ = mock.Mock(return_value = 'session_id')
 
   def test_makes_curb_api_request(self):
     cc.get_response('endpoint_with_session')

@@ -3,7 +3,7 @@ import json
 import itertools
 
 def dict_keys_to_lower(d):
-  return {str(key).lower():value for key, value in d.iteritems()}
+  return {str(key).lower():value for key, value in d.items()}
 
 def listify(list_or_single):
   is_list = isinstance(list_or_single, list)
@@ -21,7 +21,7 @@ def session_generator():
 sessions = session_generator()
 
 def get_response(endpoint):
-  response_text = curb_api(endpoint, {'session': sessions.next()})
+  response_text = curb_api(endpoint, {'session': next(sessions)})
   return dict_keys_to_lower(json.loads(response_text))
 
 def get_secret(endpoint):
