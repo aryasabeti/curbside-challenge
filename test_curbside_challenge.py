@@ -93,3 +93,53 @@ class TestGetResponse:
 
   def test_returned_value(self):
     assert cc.get_response('endpoint_with_session') == self.example_result
+
+
+@pytest.mark.parametrize("api_response,expected", [
+  (
+    [
+      {'secret': 'asecret'}
+    ],
+    'asecret'
+  ),
+
+  (
+    [
+      {'next': 'next_endpoint1'},
+      {'secret': 'anothersecret'}
+    ],
+    'anothersecret'
+  ),
+
+  (
+    [
+      {'next': ['next_endpoint2', 'next_endpoint3']},
+      {'secret': 'yetagainsecret'}
+    ],
+    'yetagainsecret'
+  ),
+])
+def test_get_secret(api_response, expected):
+  print(api_response)
+  cc.get_response = mock.Mock(side_effect = api_response)
+  assert cc.get_secret('any_endpoint') == expected
+
+# class TestGetSecret:
+#   def test_immediate_secret(self):
+#     cc.get_response = mock.Mock(return_value = {'secret': 'thesecret'})
+#     assert cc.get_secret('any_endpoint') == 'thesecret'
+
+#   def test_search_until_secret_one(self):
+#     cc.get_response = mock.Mock(side_effect = [
+#                                   {'next': 'next_endpoint1'},
+#                                   {'secret': 'theothersecret'}
+#                                 ])
+#     assert cc.get_secret('any_endpoint') == 'theothersecret'
+
+#   def test_search_until_secret_many(self):
+#     cc.get_response = mock.Mock(side_effect = [
+#                                   {'next': ['next_endpoint2', 'next_endpoint3']},
+#                                   {'secret': 'theothersecret'}
+#                                 ])
+#     assert cc.get_secret('any_endpoint') == 'theothersecret'
+
